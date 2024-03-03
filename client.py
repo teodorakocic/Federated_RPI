@@ -12,7 +12,7 @@ from sklearn.utils import shuffle
 from keras.preprocessing import image
 
 # server address = {IP_ADDRESS}:{PORT}
-server_address = "127.0.0.1:5050"
+server_address = "192.168.1.104:5050"
 
 classes = ["without-mask", "mask"]
 class_labels = {classes: i for i, classes in enumerate(classes)}
@@ -136,7 +136,7 @@ def main() -> None:
     # start Flower client
     client = CifarClient(model, training_images, training_labels, test_images, test_labels)
 
-    fl.client.start_client(
+    fl.client.start_numpy_client(
         server_address=server_address,
         client=client
     )
