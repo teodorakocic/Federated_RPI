@@ -16,7 +16,7 @@ model = tf.keras.models.load_model('saved_models/mobilenetv2')
 #model.summary()
 
 # test the model by giving it an image and get its prediction
-test_image_withoutmask_path = "datasets/dataset_test/without-mask_7.jpg"
+test_image_withoutmask_path = "datasets/dataset_test/without-mask_9.jpg"
 test_image_withoutmask = cv2.imread(test_image_withoutmask_path)
 test_image_withoutmask = cv2.cvtColor(test_image_withoutmask, cv2.COLOR_BGR2RGB)
 test_image_withoutmask = cv2.resize(test_image_withoutmask, IMAGE_SIZE)

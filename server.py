@@ -14,7 +14,7 @@ from keras.preprocessing import image
 import edgeimpulse as ei
 
 # server address = {IP_ADDRESS}:{PORT}
-server_address = "192.168.1.104:5050"
+server_address = "192.168.1.104:5051"
 
 # this variable determines if model profiling and deployment with Edge Impulse will be done
 profile_and_deploy_model_with_EI = False
