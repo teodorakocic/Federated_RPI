@@ -6,18 +6,25 @@ import flwr as fl
 
 import tensorflow as tf
 import os
+import csv
 import cv2
+from datetime import datetime
 import numpy as np
 from sklearn.utils import shuffle
 from keras.preprocessing import image
 
 # server address = {IP_ADDRESS}:{PORT}
-server_address = "192.168.1.104:5052"
+server_address = "192.168.1.102:5052"
 
 classes = ["without-mask", "mask"]
 class_labels = {classes: i for i, classes in enumerate(classes)}
 number_of_classes = len(classes)
 IMAGE_SIZE = (160, 160)
+
+header_time_performance = ['number_of_samples', 'client', 'training_time']
+with open('time_performance.csv', 'w') as fileTime:
+    writer = csv.writer(fileTime)
+    writer.writerow(header_time_performance)
 
 # make TensorFlow logs less verbose
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -42,6 +49,7 @@ class CifarClient(fl.client.NumPyClient):
         print("======= fit() ===== ")
         """Train parameters on the locally held training set."""
 
+        fit_start = datetime.now()
         # update local model parameters
         self.model.set_weights(parameters)
 
@@ -67,6 +75,22 @@ class CifarClient(fl.client.NumPyClient):
             "val_loss": history.history["val_loss"][0],
             "val_accuracy": history.history["val_accuracy"][0],
         }
+
+        fit_end = datetime.now()
+
+        fit_time = (fit_end.minute - fit_start.minute) * 60 + (fit_end.second - fit_start.second)
+
+        client_argumentparser = argparse.ArgumentParser()
+        client_argumentparser.add_argument(
+                                        '--client_number', dest='client_number', type=int, 
+                                        required=True,
+                                        help='Used to load the dataset for the client')
+        client_argumentparser = client_argumentparser.parse_args()
+        client_number = client_argumentparser.client_number
+        with open('time_performance.csv', 'a') as fileTime:
+            writer = csv.writer(fileTime)
+            writer.writerow([num_examples_train, client_number, fit_time])
+            
         return parameters_prime, num_examples_train, results
 
     def evaluate(self, parameters, config):
@@ -82,6 +106,7 @@ class CifarClient(fl.client.NumPyClient):
         # evaluate global model parameters on the local test data and return results
         loss, accuracy = self.model.evaluate(self.test_images, self.test_labels)
         num_examples_test = len(self.test_images)
+
         return loss, num_examples_test, {"accuracy": accuracy}
 
 def main() -> None:
@@ -147,6 +172,12 @@ def load_dataset(client_number):
         directory = "datasets/dataset_client1"
     elif client_number == 2:
         directory = "datasets/dataset_client2"
+    elif client_number == 3:
+        directory = "datasets/dataset_client3"
+    elif client_number == 4:
+        directory = "datasets/dataset_client4"
+    elif client_number == 5:
+        directory = "datasets/dataset_client5"
     
     sub_directories = ["test", "train"]
 

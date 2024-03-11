@@ -23,7 +23,7 @@ class App(threading.Thread):
 
         self.root.mainloop()
 
-port = '/dev/ttyACM1'
+port = '/dev/ttyACM0'
 baudrate = 115600
 # Initialize serial port
 ser = serial.Serial()

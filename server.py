@@ -6,7 +6,9 @@ import flwr as fl
 
 import tensorflow as tf
 import os
+import csv
 import cv2
+from datetime import datetime
 import numpy as np
 from sklearn.utils import shuffle
 from keras.preprocessing import image
@@ -14,7 +16,7 @@ from keras.preprocessing import image
 import edgeimpulse as ei
 
 # server address = {IP_ADDRESS}:{PORT}
-server_address = "192.168.1.104:5052"
+server_address = "192.168.1.102:5052"
 
 # this variable determines if model profiling and deployment with Edge Impulse will be done
 profile_and_deploy_model_with_EI = False
@@ -33,9 +35,15 @@ number_of_classes = len(classes)
 # defining image size, 
 # a larger one means more data goes to the model(good thing) but processing time and model size will increase
 IMAGE_SIZE = (160, 160)
+CLIENT_NUMBER = 2
 
-federatedLearningcounts = 6
-local_client_epochs = 20
+header_effectivness = ['clients number', 'round', 'training_loss', 'training_accuracy']
+with open('epoch_25.csv', 'w') as fileEffec:
+    writer = csv.writer(fileEffec)
+    writer.writerow(header_effectivness)
+
+federatedLearningcounts = 10
+local_client_epochs = 25
 local_client_batch_size = 8
 
 def main() -> None:
@@ -62,6 +70,8 @@ def main() -> None:
     )
     model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
     """
+    start_training = datetime.now()
+
     base_model = tf.keras.applications.MobileNetV2(
         input_shape=(160, 160, 3),
         alpha=1.0,
@@ -93,9 +103,9 @@ def main() -> None:
     strategy = fl.server.strategy.FedAvg(
         fraction_fit=0.3,
         fraction_evaluate=0.2,
-        min_fit_clients=2,
-        min_evaluate_clients=2,
-        min_available_clients=2,
+        min_fit_clients=CLIENT_NUMBER,
+        min_evaluate_clients=CLIENT_NUMBER,
+        min_available_clients=CLIENT_NUMBER,
         evaluate_fn=get_evaluate_fn(model),
         on_fit_config_fn=fit_config,
         on_evaluate_config_fn=evaluate_config,
@@ -167,7 +177,16 @@ def get_evaluate_fn(model):
         loss, accuracy = model.evaluate(test_images, test_labels, verbose=0)
         print("======= server round %s/%s accuracy : %s =======" %(server_round, federatedLearningcounts,accuracy))
 
+        with open('epoch_25.csv', 'a') as fileEffec:
+            writer = csv.writer(fileEffec)
+            writer.writerow([CLIENT_NUMBER, server_round, loss, accuracy])
+
         if (server_round == federatedLearningcounts):
+            end_training = datetime.now()
+            training_time_minutes = end_training.minute - start_training.minute
+            training_time_second = end_training.second - start_training.second
+
+            print(f"Training of the model for {CLIENT_NUMBER} took {training_time_minutes} minutes and {training_time_second} second.") 
             # save the decentralized ML model locally on the server computer
             print("Saving updated model locally..")
             #model.save('saved_models/mobilenetv2.h5')  # save model in .h5 format
