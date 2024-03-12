@@ -6,6 +6,7 @@ import flwr as fl
 
 import tensorflow as tf
 import os
+import sys
 import csv
 import cv2
 from datetime import datetime
@@ -22,9 +23,20 @@ number_of_classes = len(classes)
 IMAGE_SIZE = (160, 160)
 
 header_time_performance = ['number_of_samples', 'client', 'training_time']
+header_test_accuracy = ['training_loss', 'training_accuracy']
+header_communication_efficency = ['client', 'size_model_weights']
+
 with open('time_performance.csv', 'w') as fileTime:
     writer = csv.writer(fileTime)
     writer.writerow(header_time_performance)
+
+with open('test_accuracy.csv', 'w') as fileAccuracy:
+    writer = csv.writer(fileAccuracy)
+    writer.writerow(header_test_accuracy)
+
+with open('communication_efficiency.csv', 'w') as fileCommunication:
+    writer = csv.writer(fileCommunication)
+    writer.writerow(header_communication_efficency)
 
 # make TensorFlow logs less verbose
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -87,9 +99,14 @@ class CifarClient(fl.client.NumPyClient):
                                         help='Used to load the dataset for the client')
         client_argumentparser = client_argumentparser.parse_args()
         client_number = client_argumentparser.client_number
+
         with open('time_performance.csv', 'a') as fileTime:
             writer = csv.writer(fileTime)
             writer.writerow([num_examples_train, client_number, fit_time])
+
+        with open('communication_efficiency.csv', 'a') as fileCommunication:
+            writer = csv.writer(fileCommunication)
+            writer.writerow([client_number, round(sys.getsizeof(parameters_prime) / (1024 * 1024), 2)])
             
         return parameters_prime, num_examples_train, results
 
@@ -106,6 +123,10 @@ class CifarClient(fl.client.NumPyClient):
         # evaluate global model parameters on the local test data and return results
         loss, accuracy = self.model.evaluate(self.test_images, self.test_labels)
         num_examples_test = len(self.test_images)
+
+        with open('test_accuracy.csv', 'a') as fileAccuracy:
+            writer = csv.writer(fileAccuracy)
+            writer.writerow([loss, round(accuracy*100, 2)])
 
         return loss, num_examples_test, {"accuracy": accuracy}
 

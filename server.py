@@ -43,8 +43,10 @@ with open('epoch_25.csv', 'w') as fileEffec:
     writer.writerow(header_effectivness)
 
 federatedLearningcounts = 10
-local_client_epochs = 25
+local_client_epochs = 20
 local_client_batch_size = 8
+
+start_training = datetime.now()
 
 def main() -> None:
     # load and compile model for : server-side parameter initialization, server-side parameter evaluation
@@ -70,8 +72,6 @@ def main() -> None:
     )
     model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
     """
-    start_training = datetime.now()
-
     base_model = tf.keras.applications.MobileNetV2(
         input_shape=(160, 160, 3),
         alpha=1.0,
@@ -186,7 +186,10 @@ def get_evaluate_fn(model):
             training_time_minutes = end_training.minute - start_training.minute
             training_time_second = end_training.second - start_training.second
 
-            print(f"Training of the model for {CLIENT_NUMBER} took {training_time_minutes} minutes and {training_time_second} second.") 
+            if(training_time_second == 0):
+                print(f"Training of the model for {CLIENT_NUMBER} took {training_time_minutes} minutes.")
+            else:
+                print(f"Training of the model for {CLIENT_NUMBER} took {training_time_minutes} minutes and {training_time_second} second.") 
             # save the decentralized ML model locally on the server computer
             print("Saving updated model locally..")
             #model.save('saved_models/mobilenetv2.h5')  # save model in .h5 format
