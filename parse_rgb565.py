@@ -4,8 +4,6 @@ from tkinter import *
 from PIL import Image, ImageTk
 import threading
 
-
-
 class App(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -52,6 +50,7 @@ def rgb565_to_rgb888(val):
     return rgb
 
 app = App()
+image_counter = 0
 
 while True:
 
@@ -72,7 +71,8 @@ while True:
         if(str(data_str) == "</image>"):
             print("Captured frame")
             image_pil = Image.fromarray(img_rgb888)
-            image_pil.save("out.bmp")
+            image_counter += 1
+            image_pil.save(f"out_{image_counter}.jpg")
             test = ImageTk.PhotoImage(image_pil)
             label = Label(app.root, image=test)
             label.image = test

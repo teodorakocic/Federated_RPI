@@ -1,6 +1,3 @@
-# Credits. This code has been adapted from :
-# https://github.com/adap/flower/tree/main/examples/advanced-tensorflow
-
 from typing import Dict, Optional, Tuple
 import flwr as fl
 
@@ -15,8 +12,8 @@ from keras.preprocessing import image
 
 import edgeimpulse as ei
 
-# server address = {IP_ADDRESS}:{PORT}
-server_address = "192.168.1.102:5052"
+#server_address = "192.168.1.102:5052"
+server_address = "192.168.85.226:5052"
 
 # this variable determines if model profiling and deployment with Edge Impulse will be done
 profile_and_deploy_model_with_EI = False
@@ -33,7 +30,6 @@ class_labels = {classes: i for i, classes in enumerate(classes)}
 number_of_classes = len(classes)
 
 # defining image size, 
-# a larger one means more data goes to the model(good thing) but processing time and model size will increase
 IMAGE_SIZE = (160, 160)
 CLIENT_NUMBER = 2
 
@@ -50,23 +46,8 @@ start_training = datetime.now()
 
 def main() -> None:
     # load and compile model for : server-side parameter initialization, server-side parameter evaluation
-    
-    # loading and compiling Keras model, choose either MobileNetV2 (faster) or EfficientNetB0. 
-    # feel free to add more Keras applications
-    # https://keras.io/api/applications/
     """
-    Model               MobileNetV2     EfficientNetB0
-    Size (MB)           14              29
-    Top-1 Accuracy      71.3%           77.1%	
-    Top-5 Accuracy      90.1%           93.3%
-    Parameters          3.5M            5.3M
-    Depth               105             132	
-    CPU inference ms    25.9            46.0
-    GPU inference ms    3.8             4.9
-    """
-
-    """
-    # uncomment to load an EfficientNetB0 model
+    # EfficientNetB0 model
     model = tf.keras.applications.EfficientNetB0(
         input_shape=(160, 160, 3), weights=None, classes=2
     )
@@ -95,9 +76,6 @@ def main() -> None:
 
     # compile the model
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-
-    # print a summary of the model architecture
-    #model.summary()
 
     # create strategy
     strategy = fl.server.strategy.FedAvg(
@@ -188,11 +166,13 @@ def get_evaluate_fn(model):
 
             if(training_time_second == 0):
                 print(f"Training of the model for {CLIENT_NUMBER} took {training_time_minutes} minutes.")
-            else:
-                print(f"Training of the model for {CLIENT_NUMBER} took {training_time_minutes} minutes and {training_time_second} second.") 
+            elif(training_time_second > 0):
+                print(f"Training of the model for {CLIENT_NUMBER} took {training_time_minutes} minutes and {abs(training_time_second)} second.") 
+            elif(training_time_minutes < 0):
+                print(f"Training of the model for {CLIENT_NUMBER} took {(training_time_minutes-1)} minutes and {(training_time_second+60)} second.") 
+
             # save the decentralized ML model locally on the server computer
             print("Saving updated model locally..")
-            #model.save('saved_models/mobilenetv2.h5')  # save model in .h5 format
             model.save('saved_models/mobilenetv2')      # save model in SavedModel format
 
             # test the updated model
@@ -217,7 +197,6 @@ def fit_config(server_round: int):
 
 def evaluate_config(server_round: int):
     """Return evaluation configuration dict for each round."""
-    #val_steps = 5 if server_round < 4 else 10
     val_steps = 4
     return {"val_steps": val_steps}
 
@@ -252,28 +231,13 @@ def test_updated_model(model):
     most_confident_class = classes[highest_prediction_score_index]
     print("The model mostly predicted %s with a score/confidence of %s" %(most_confident_class, highest_prediction_score))
 
-    """ Some results after testing the model with a without-mask's image:
-    Testing the model on an image.....
-    1/1 [==============================] - 3s 3s/step
-    [9.992312e-01 7.688053e-04]
-    The model mostly predicted without-mask with a score/confidence of 0.9992312
-    """
-
-    """ Some results after testing the model with a mask's image:
-    Testing the model on an image.....
-    1/1 [==============================] - 2s 2s/step
-    [0.00373875 0.9962612 ]
-    The model mostly predicted mask with a score/confidence of 0.9962612
-    """
-
 def ei_profile_and_deploy_model(model):
     # list the available profile target devices
     ei.model.list_profile_devices()
 
     # estimate the RAM, ROM, and inference time for our model on the target hardware family
     try:
-        profile = ei.model.profile(model=model,
-                                device='raspberry-pi-4')
+        profile = ei.model.profile(model=model, device='raspberry-pi-4')
         print(profile.summary())
     except Exception as e:
         print(f"Could not profile: {e}")

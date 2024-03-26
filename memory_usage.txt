@@ -1,0 +1,23 @@
+-----before training-----
+               total        used        free      shared  buff/cache   available
+Mem:            3793         683        2275          69         977        3110
+Swap:             99           0          99
+
+
+-----after fitst training round-----
+ 	       total        used        free      shared  buff/cache   available
+Mem:            3793        1596        1165          74        1181        2196
+Swap:             99           0          99
+
+
+-----after 5th training round-----
+               total        used        free      shared  buff/cache   available
+Mem:            3793        1705        1056          69        1176        2087
+Swap:             99           0          99
+
+
+-----after 9.5 training rounds-----
+	       total        used        free      shared  buff/cache   available
+Mem:            3793        1696        1122          79        1129        2096
+Swap:             99           0          99
+

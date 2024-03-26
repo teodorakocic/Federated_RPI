@@ -1,6 +1,3 @@
-# Credits. This code has been adapted from :
-# https://github.com/adap/flower/tree/main/examples/advanced-tensorflow
-
 import argparse
 import flwr as fl
 
@@ -14,7 +11,6 @@ import numpy as np
 from sklearn.utils import shuffle
 from keras.preprocessing import image
 
-# server address = {IP_ADDRESS}:{PORT}
 server_address = "192.168.1.102:5052"
 
 classes = ["without-mask", "mask"]
@@ -106,7 +102,8 @@ class CifarClient(fl.client.NumPyClient):
 
         with open('communication_efficiency.csv', 'a') as fileCommunication:
             writer = csv.writer(fileCommunication)
-            writer.writerow([client_number, round(sys.getsizeof(parameters_prime) / (1024 * 1024), 2)])
+            # size calculated in kBs
+            writer.writerow([client_number, round(sys.getsizeof(parameters_prime) / 1024, 2)])
             
         return parameters_prime, num_examples_train, results
 
@@ -143,7 +140,7 @@ def main() -> None:
 
     # load and compile Keras model, choose either MobileNetV2 (faster) or EfficientNetB0. Needs to be same as the server!
     """
-    # uncomment to load an EfficientNetB0 model
+    # EfficientNetB0 model
     model = tf.keras.applications.EfficientNetB0(
         input_shape=(160, 160, 3), weights=None, classes=2
     )
